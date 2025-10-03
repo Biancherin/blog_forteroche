@@ -38,6 +38,17 @@ class ArticleManager extends AbstractEntityManager
     }
 
     /**
+     * Incrémente le nombre de vues d'un article.
+     * @param int $id : l'id de l'article.
+     * @return void
+     */
+    public function incrementViews(int $id) : void
+    {
+        $sql = "UPDATE article SET nb_views = nb_views + 1 WHERE id = :id";
+        $this->db->query($sql, ['id' => $id]);
+    }
+
+    /**
      * Ajoute ou modifie un article.
      * On sait si l'article est un nouvel article car son id sera -1.
      * @param Article $article : l'article à ajouter ou modifier.
@@ -59,7 +70,7 @@ class ArticleManager extends AbstractEntityManager
      */
     public function addArticle(Article $article) : void
     {
-        $sql = "INSERT INTO article (id_user, title, content, date_creation) VALUES (:id_user, :title, :content, NOW())";
+        $sql = "INSERT INTO article (id_user, title, content, date_creation, nb_views) VALUES (:id_user, :title, :content, NOW(), 0)";
         $this->db->query($sql, [
             'id_user' => $article->getIdUser(),
             'title' => $article->getTitle(),
