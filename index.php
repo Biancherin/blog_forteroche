@@ -9,9 +9,8 @@ $action = Utils::request('action', 'home');
 
 // Try catch global pour gérer les erreurs
 try {
-    // Pour chaque action, on appelle le bon contrôleur et la bonne méthode.
     switch ($action) {
-        // Pages accessibles à tous.
+        // Pages publiques
         case 'home':
             $articleController = new ArticleController();
             $articleController->showHome();
@@ -21,7 +20,7 @@ try {
             $articleController = new ArticleController();
             $articleController->showApropos();
             break;
-        
+
         case 'showArticle': 
             $articleController = new ArticleController();
             $articleController->showArticle();
@@ -37,17 +36,15 @@ try {
             $commentController->addComment();
             break;
 
-
-        // Section admin & connexion. 
-
+        // Partie Admin
         case 'admin': 
             $adminController = new AdminController();
             $adminController->showAdmin();
             break;
 
-        case 'showMonitoring':
+        case 'showMonitoring': 
             $adminController = new AdminController();
-            $adminController->getAllArticlesForMonitoring();
+            $adminController->showMonitoring();
             break;
 
         case 'connectionForm':

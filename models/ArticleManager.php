@@ -5,10 +5,6 @@
  */
 class ArticleManager extends AbstractEntityManager 
 {
-    /**
-     * Récupère tous les articles.
-     * @return array : un tableau d'objets Article.
-     */
     public function getAllArticles() : array
     {
         $sql = "SELECT * FROM article";
@@ -21,11 +17,6 @@ class ArticleManager extends AbstractEntityManager
         return $articles;
     }
     
-    /**
-     * Récupère un article par son id.
-     * @param int $id : l'id de l'article.
-     * @return Article|null : un objet Article ou null si l'article n'existe pas.
-     */
     public function getArticleById(int $id) : ?Article
     {
         $sql = "SELECT * FROM article WHERE id = :id";
@@ -37,23 +28,12 @@ class ArticleManager extends AbstractEntityManager
         return null;
     }
 
-    /**
-     * Incrémente le nombre de vues d'un article.
-     * @param int $id : l'id de l'article.
-     * @return void
-     */
     public function incrementViews(int $id) : void
     {
         $sql = "UPDATE article SET nb_views = nb_views + 1 WHERE id = :id";
         $this->db->query($sql, ['id' => $id]);
     }
 
-    /**
-     * Ajoute ou modifie un article.
-     * On sait si l'article est un nouvel article car son id sera -1.
-     * @param Article $article : l'article à ajouter ou modifier.
-     * @return void
-     */
     public function addOrUpdateArticle(Article $article) : void 
     {
         if ($article->getId() == -1) {
@@ -63,14 +43,10 @@ class ArticleManager extends AbstractEntityManager
         }
     }
 
-    /**
-     * Ajoute un article.
-     * @param Article $article : l'article à ajouter.
-     * @return void
-     */
     public function addArticle(Article $article) : void
     {
-        $sql = "INSERT INTO article (id_user, title, content, date_creation, nb_views) VALUES (:id_user, :title, :content, NOW(), 0)";
+        $sql = "INSERT INTO article (id_user, title, content, date_creation, nb_views) 
+                VALUES (:id_user, :title, :content, NOW(), 0)";
         $this->db->query($sql, [
             'id_user' => $article->getIdUser(),
             'title' => $article->getTitle(),
@@ -78,14 +54,11 @@ class ArticleManager extends AbstractEntityManager
         ]);
     }
 
-    /**
-     * Modifie un article.
-     * @param Article $article : l'article à modifier.
-     * @return void
-     */
     public function updateArticle(Article $article) : void
     {
-        $sql = "UPDATE article SET title = :title, content = :content, date_update = NOW() WHERE id = :id";
+        $sql = "UPDATE article 
+                SET title = :title, content = :content, date_update = NOW() 
+                WHERE id = :id";
         $this->db->query($sql, [
             'title' => $article->getTitle(),
             'content' => $article->getContent(),
@@ -93,37 +66,32 @@ class ArticleManager extends AbstractEntityManager
         ]);
     }
 
-    /**
-     * Supprime un article.
-     * @param int $id : l'id de l'article à supprimer.
-     * @return void
-     */
     public function deleteArticle(int $id) : void
     {
         $sql = "DELETE FROM article WHERE id = :id";
         $this->db->query($sql, ['id' => $id]);
     }
+
     /**
-     * Nouvelle méthode pour le Monitoring
-     * Récupère tous les articles et enrichit chaque article avec le nombre de commentaires.
+     * Méthode spéciale pour le Monitoring :
+     * Récupère tous les articles avec leur nombre de commentaires.
+     * Pas de tri SQL ici : c’est le contrôleur qui trie.
      */
-    public function getAllArticlesForMonitoring() : array
+    public function getAllArticlesForMonitoring(): array
     {
-        // On récupère le nombre de commentaires en même temps
-    $sql = "SELECT a.*, 
+        $sql = "SELECT a.*, 
                    (SELECT COUNT(*) FROM comment c WHERE c.id_article = a.id) AS nb_comments
-            FROM article a
-            ORDER BY a.date_creation DESC";
-    
-    $result = $this->db->query($sql);
-    $articles = [];
+                FROM article a";
 
-    while ($article = $result->fetch()) {
-        $articleObj = new Article($article);
-        $articleObj->setNbComments($article['nb_comments']); 
-        $articles[] = $articleObj;
-    }
+        $result = $this->db->query($sql);
+        $articles = [];
 
-    return $articles;
+        while ($article = $result->fetch()) {
+            $articleObj = new Article($article);
+            $articleObj->setNbComments($article['nb_comments']);
+            $articles[] = $articleObj;
+        }
+
+        return $articles;
     }
-    }
+}
