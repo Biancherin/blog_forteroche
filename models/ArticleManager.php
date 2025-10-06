@@ -94,4 +94,21 @@ class ArticleManager extends AbstractEntityManager
 
         return $articles;
     }
+    public function getAllArticlesForAdmin(): array
+{
+    $sql = "SELECT a.*, 
+               (SELECT COUNT(*) FROM comment c WHERE c.id_article = a.id) AS nb_comments
+            FROM article a";
+
+    $result = $this->db->query($sql);
+    $articles = [];
+
+    while ($article = $result->fetch()) {
+        $articleObj = new Article($article);
+        $articleObj->setNbComments($article['nb_comments']);
+        $articles[] = $articleObj;
+    }
+
+    return $articles;
+}
 }

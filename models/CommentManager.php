@@ -1,21 +1,19 @@
 <?php
 
 /**
- * Cette classe sert à gérer les commentaires. 
+ * Cette classe sert à gérer les commentaires.
  */
 class CommentManager extends AbstractEntityManager
 {
     /**
      * Récupère tous les commentaires d'un article.
-     * @param int $idArticle : l'id de l'article.
-     * @return array : un tableau d'objets Comment.
      */
-    public function getAllCommentsByArticleId(int $idArticle) : array
+    public function getAllCommentsByArticleId(int $idArticle): array
     {
-        $sql = "SELECT * FROM comment WHERE id_article = :idArticle";
-        $result = $this->db->query($sql, ['idArticle' => $idArticle]);
-        $comments = [];
+        $sql = "SELECT * FROM comment WHERE id_article = $idArticle ORDER BY date_creation DESC";
+        $result = $this->db->query($sql);
 
+        $comments = [];
         while ($comment = $result->fetch()) {
             $comments[] = new Comment($comment);
         }
@@ -24,56 +22,109 @@ class CommentManager extends AbstractEntityManager
 
     /**
      * Récupère un commentaire par son id.
-     * @param int $id : l'id du commentaire.
-     * @return Comment|null : un objet Comment ou null si le commentaire n'existe pas.
      */
-    public function getCommentById(int $id) : ?Comment
+    public function getCommentById(int $id): ?Comment
     {
-        $sql = "SELECT * FROM comment WHERE id = :id";
-        $result = $this->db->query($sql, ['id' => $id]);
+        $sql = "SELECT * FROM comment WHERE id = $id";
+        $result = $this->db->query($sql);
         $comment = $result->fetch();
-        if ($comment) {
-            return new Comment($comment);
-        }
-        return null;
+        return $comment ? new Comment($comment) : null;
     }
 
     /**
      * Ajoute un commentaire.
-     * @param Comment $comment : l'objet Comment à ajouter.
-     * @return bool : true si l'ajout a réussi, false sinon.
      */
-    public function addComment(Comment $comment) : bool
+    public function addComment(Comment $comment): bool
     {
-        $sql = "INSERT INTO comment (pseudo, content, id_article, date_creation) VALUES (:pseudo, :content, :idArticle, NOW())";
-        $result = $this->db->query($sql, [
-            'pseudo' => $comment->getPseudo(),
-            'content' => $comment->getContent(),
-            'idArticle' => $comment->getIdArticle()
-        ]);
+        $pseudo = addslashes($comment->getPseudo());
+        $content = addslashes($comment->getContent());
+        $idArticle = (int)$comment->getIdArticle();
+
+        $sql = "INSERT INTO comment (pseudo, content, id_article, date_creation) 
+                VALUES ('$pseudo', '$content', $idArticle, NOW())";
+        $result = $this->db->query($sql);
         return $result->rowCount() > 0;
     }
 
     /**
      * Supprime un commentaire.
-     * @param Comment $comment : l'objet Comment à supprimer.
-     * @return bool : true si la suppression a réussi, false sinon.
      */
-    public function deleteComment(Comment $comment) : bool
+    public function deleteComment(Comment $comment): bool
     {
-        $sql = "DELETE FROM comment WHERE id = :id";
-        $result = $this->db->query($sql, ['id' => $comment->getId()]);
+        $id = (int)$comment->getId();
+        $sql = "DELETE FROM comment WHERE id = $id";
+        $result = $this->db->query($sql);
         return $result->rowCount() > 0;
     }
 
     /**
      * Compte le nombre de commentaires pour un article.
      */
-    public function countCommentsByArticleId(int $idArticle) : int
+    public function countCommentsByArticleId(int $idArticle): int
     {
-        $sql = "SELECT COUNT(*) AS nb FROM comment WHERE id_article = :idArticle";
-        $result = $this->db->query($sql, ['idArticle' => $idArticle]);
+        $sql = "SELECT COUNT(*) AS nb FROM comment WHERE id_article = $idArticle";
+        $result = $this->db->query($sql);
         $row = $result->fetch();
-        return $row ? (int) $row['nb'] : 0;
+        return $row ? (int)$row['nb'] : 0;
+    }
+
+    /**
+     * Récupère les commentaires avec pagination et filtres.
+     */
+    public function getCommentsByArticlePaginated(
+        int $idArticle,
+        int $limit,
+        int $offset,
+        string $pseudoFilter = "",
+        string $contentFilter = "",
+        string $dateFilter = ""
+    ): array {
+        $sql = "SELECT * FROM comment WHERE id_article = $idArticle";
+
+        if ($pseudoFilter !== "") {
+            $sql .= " AND pseudo LIKE '%" . addslashes($pseudoFilter) . "%'";
+        }
+        if ($contentFilter !== "") {
+            $sql .= " AND content LIKE '%" . addslashes($contentFilter) . "%'";
+        }
+        if ($dateFilter !== "") {
+            $sql .= " AND DATE(date_creation) = '" . addslashes($dateFilter) . "'";
+        }
+
+        $sql .= " ORDER BY date_creation DESC LIMIT $limit OFFSET $offset";
+
+        $result = $this->db->query($sql);
+        $comments = [];
+        while ($row = $result->fetch()) {
+            $comments[] = new Comment($row);
+        }
+        return $comments;
+    }
+
+    /**
+     * Compte les commentaires avec filtres (pour pagination).
+     */
+    public function countCommentsByArticlePaginated(
+        int $idArticle,
+        string $pseudoFilter = "",
+        string $contentFilter = "",
+        string $dateFilter = ""
+    ): int {
+        $sql = "SELECT COUNT(*) AS total FROM comment WHERE id_article = $idArticle";
+
+        if ($pseudoFilter !== "") {
+            $sql .= " AND pseudo LIKE '%" . addslashes($pseudoFilter) . "%'";
+        }
+        if ($contentFilter !== "") {
+            $sql .= " AND content LIKE '%" . addslashes($contentFilter) . "%'";
+        }
+        if ($dateFilter !== "") {
+            $sql .= " AND DATE(date_creation) = '" . addslashes($dateFilter) . "'";
+        }
+
+        $result = $this->db->query($sql);
+        $row = $result->fetch();
+        return (int)($row['total'] ?? 0);
     }
 }
+

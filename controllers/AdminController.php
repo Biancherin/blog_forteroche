@@ -12,7 +12,7 @@ class AdminController {
         $this->checkIfUserIsConnected();
 
         $articleManager = new ArticleManager();
-        $articles = $articleManager->getAllArticles();
+        $articles = $articleManager->getAllArticlesForAdmin(); // nouvelle méthode
 
         $view = new View("Administration");
         $view->render("admin", [
@@ -79,6 +79,59 @@ class AdminController {
      * Vérifie que l'utilisateur est connecté.
      * @return void
      */
+    /**
+    * Affiche les commentaires d'un article avec filtres et pagination.
+    */
+    public function showCommentsAdmin(): void
+    {
+        $this->checkIfUserIsConnected();
+
+        $idArticle = Utils::request('idArticle', -1);
+        $page = max(1, Utils::request('page', 1));
+        $limit = 10; // nombre de commentaires par page
+        $offset = ($page - 1) * $limit;
+
+        // filtres
+        $filterPseudo = Utils::request('pseudo', '');
+        $filterContent = Utils::request('content', '');
+        $filterDate = Utils::request('date_creation', ''); // optionnel
+
+        $commentManager = new CommentManager();
+        $totalComments = $commentManager->countCommentsByArticlePaginated($idArticle, $filterPseudo, $filterContent, $filterDate);
+        $comments = $commentManager->getCommentsByArticlePaginated($idArticle, $limit, $offset, $filterPseudo, $filterContent, $filterDate);
+
+        $totalPages = ceil($totalComments / $limit);
+
+        $view = new View("Commentaires de l'article");
+        $view->render("adminComment", [
+            'comments' => $comments,
+            'idArticle' => $idArticle,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'filterPseudo' => $filterPseudo,
+            'filterContent' => $filterContent,
+            'filterDate' => $filterDate
+        ]);
+    }
+
+    /**
+    * Supprime un commentaire depuis l'interface admin.
+    */
+    public function deleteComment(): void
+    {
+        $this->checkIfUserIsConnected();
+        $idComment = Utils::request("id", -1);
+
+        $commentManager = new CommentManager();
+        $comment = $commentManager->getCommentById($idComment);
+        if ($comment) {
+            $commentManager->deleteComment($comment);
+            Utils::redirect("showCommentsAdmin&idArticle=" . $comment->getIdArticle());
+        } else {
+            throw new Exception("Le commentaire n'existe pas.");
+        }
+    }
+
     private function checkIfUserIsConnected(): void {
         if (!isset($_SESSION['user'])) {
             Utils::redirect("connectionForm");
