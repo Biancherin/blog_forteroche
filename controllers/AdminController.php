@@ -24,11 +24,40 @@ class AdminController {
             'articles' => $articles
         ]);
     }
+    public function showMonitoring() : void
+    {
+        $this->checkIfUserIsConnected();
 
+        $articleManager = new ArticleManager();
+        $articles = $articleManager->getAllArticlesForMonitoring();
+
+        $view = new View("Monitoring");
+        $view->render("monitoring", [
+            'articles' => $articles
+        ]);
+    }
     /**
      * Vérifie que l'utilisateur est connecté.
      * @return void
      */
+    /**
+    * Affiche la page Monitoring : liste des articles avec nombre de vues, commentaires et date.
+    */
+    public function getAllArticlesForMonitoring(): void
+    {
+        $this->checkIfUserIsConnected(); // Vérifie que l'utilisateur est connecté
+
+        // On récupère tous les articles
+        $articleManager = new ArticleManager();
+        $articles = $articleManager->getAllArticlesForMonitoring();
+
+        // On affiche la vue monitoring
+        $view = new View("Monitoring");
+        $view->render("Monitoring", [
+        'articles' => $articles
+        ]);
+    }
+
     private function checkIfUserIsConnected() : void
     {
         // On vérifie que l'utilisateur est connecté.

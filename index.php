@@ -39,9 +39,15 @@ try {
 
 
         // Section admin & connexion. 
+
         case 'admin': 
             $adminController = new AdminController();
             $adminController->showAdmin();
+            break;
+
+        case 'showMonitoring':
+            $adminController = new AdminController();
+            $adminController->getAllArticlesForMonitoring();
             break;
 
         case 'connectionForm':

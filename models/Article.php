@@ -12,6 +12,7 @@
     private ?DateTime $dateCreation = null;
     private ?DateTime $dateUpdate = null;  
     private int $nbViews = 0; // <- ajout du compteur de vues
+    private int $nbComments = 0;
 
     /**
      * Setter pour l'id de l'utilisateur. 
@@ -143,5 +144,14 @@
     {
         return $this->nbViews;
     }
+    
+    public function setNbComments(int $nbComments): void
+    {   
+    $this->nbComments = $nbComments;
+    }
 
+    public function getNbComments(): int
+    {
+    return $this->nbComments;
+    }   
  }

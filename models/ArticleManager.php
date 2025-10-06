@@ -103,4 +103,27 @@ class ArticleManager extends AbstractEntityManager
         $sql = "DELETE FROM article WHERE id = :id";
         $this->db->query($sql, ['id' => $id]);
     }
-}
+    /**
+     * Nouvelle méthode pour le Monitoring
+     * Récupère tous les articles et enrichit chaque article avec le nombre de commentaires.
+     */
+    public function getAllArticlesForMonitoring() : array
+    {
+        // On récupère le nombre de commentaires en même temps
+    $sql = "SELECT a.*, 
+                   (SELECT COUNT(*) FROM comment c WHERE c.id_article = a.id) AS nb_comments
+            FROM article a
+            ORDER BY a.date_creation DESC";
+    
+    $result = $this->db->query($sql);
+    $articles = [];
+
+    while ($article = $result->fetch()) {
+        $articleObj = new Article($article);
+        $articleObj->setNbComments($article['nb_comments']); 
+        $articles[] = $articleObj;
+    }
+
+    return $articles;
+    }
+    }
